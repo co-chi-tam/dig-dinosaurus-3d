@@ -321,7 +321,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &1944507517630420
 GameObject:
   m_ObjectHideFlags: 1
@@ -530,7 +530,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 500
-  field of view: 60
+  field of view: 65
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -960,6 +960,7 @@ MonoBehaviour:
   m_DinosaurusFolder: Dinosaurus/
   m_DinosaurusPrefabs: []
   m_CellSize: {x: 1, y: 1, z: 1}
+  m_GridText: {fileID: 0}
   m_CellFolder: Rock/
   m_CellTextures:
   - {fileID: 2800000, guid: bbe6f8ee500cb5546bb5b5e9240ad51b, type: 3}

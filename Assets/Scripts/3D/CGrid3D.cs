@@ -12,15 +12,13 @@ public class CGrid3D : MonoBehaviour {
 	[Header("Config")]
 	[SerializeField]	protected bool m_ActiveGrid = true;
 	[Header("Dinosaurus")]
+	public static int DINOSAURUS_INDEX = 0;
 	[SerializeField]	protected Transform m_DinosaurusRoot;
 	[SerializeField]	protected string m_DinosaurusFolder = "Dinosaurus/";
 	[SerializeField]	protected GameObject[] m_DinosaurusPrefabs;
 	[Header("Grid")]
 	[SerializeField]	protected Vector3 m_CellSize = new Vector3(1f, 1f, 1f);
-	// [SerializeField]	protected TextAsset m_GridText;
-	// [SerializeField]	protected int m_Row = 5;
-	// [SerializeField]	protected int m_Column = 5;
-	// [SerializeField]	protected int m_Deep = 5;
+	[SerializeField]	protected TextAsset m_GridText;
 	[Header("Cell")]
 	[SerializeField]	protected string m_CellFolder = "Rock/";
 	[SerializeField]	protected Texture2D[] m_CellTextures;
@@ -72,17 +70,31 @@ public class CGrid3D : MonoBehaviour {
 
 	#region Generate Grid
 
+	/// <summary>
+	/// Init resources
+	/// Dinosaurus models, textures ...
+	/// </summary>
 	public virtual void InitResources() {
 		this.m_DinosaurusPrefabs = Resources.LoadAll<GameObject>(this.m_DinosaurusFolder);
 		this.m_CellTextures = Resources.LoadAll<Texture2D>(this.m_CellFolder);
 	}
 
+	/// <summary>
+	/// Generate grid and dinosaur.
+	/// </summary>
 	public virtual void InitGame() {
-		this.GenerateRandomGrid();
+		if (this.m_GridText == null) {
+			this.GenerateRandomGrid();
+		} else {
+			this.GenerateFromText(this.m_GridText.text);
+		}
 		this.GenerateCells();
-		this.GenerateDinosaurus();
+		this.GenerateDinosaur();
 	}
 
+	/// <summary>
+	/// Random grid with instance array.
+	/// </summary>
 	public virtual void GenerateRandomGrid() {	
 		this.m_Grid = new int[,,] {
 			{ {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0} },
@@ -94,7 +106,6 @@ public class CGrid3D : MonoBehaviour {
 			{ {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0} },
 			{ {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0} }
 		};
-		// this.m_Grid = new int[this.m_Row, this.m_Column, this.m_Deep];
 		this.m_GridCells = new CCell3D[this.m_Grid.GetLength(0), this.m_Grid.GetLength(1), this.m_Grid.GetLength(2)];
 		var i = 0;
 		for (int z = 1; z < this.m_Grid.GetLength(2) - 1; z++) 
@@ -115,10 +126,37 @@ public class CGrid3D : MonoBehaviour {
 		this.m_GridRoot.localScale = this.m_CellSize;
 	}
 
+	/// <summary>
+	/// Generate with text.
+	/// </summary>
+	public virtual void GenerateFromText(string gridStr) {
+		var rows 	= gridStr.Split('\n');
+		var dinosaurIndex = int.Parse (rows[0].ToString());
+		var columns = rows[1].Split(',');
+		var deeps 	= columns[0].Split(' ');
+		this.m_Grid = new int[rows.Length - 1, columns.Length, deeps.Length];
+		this.m_GridCells = new CCell3D[rows.Length - 1, columns.Length, deeps.Length];
+		DINOSAURUS_INDEX = dinosaurIndex;
+		for (int x = 0; x < rows.Length - 1; x++)
+		{
+			var column = rows[x + 1].Split(',');
+			for (int y = 0; y < column.Length; y++)
+			{
+				var deep = column[y].Split(' ');
+				for (int z = 0; z < column.Length; z++)
+				{
+					var value = int.Parse(deep[z].ToString());
+					this.m_Grid[x, y, z] = value;
+				}
+			}
+		}
+	}
+
 	public virtual void GenerateCells() {
 		var centerX = (this.m_Grid.GetLength(0) - this.m_CellSize.x) / 2f;
 		var centerY = (this.m_Grid.GetLength(1) - this.m_CellSize.y) / 2f;
 		var centerZ = (this.m_Grid.GetLength(2) - this.m_CellSize.z) / 2f;
+		var gridStr = string.Format("{0}\n", DINOSAURUS_INDEX);
 		for (int z = 0; z < this.m_Grid.GetLength(2); z++) 
 		{
 			for (int y = 0; y < this.m_Grid.GetLength(1); y++)
@@ -138,15 +176,18 @@ public class CGrid3D : MonoBehaviour {
 						
 					});
 					this.m_GridCells[x, y, z] = cellItem;
+					gridStr += string.Format("{0}{1}", cellValue, x < this.m_Grid.GetLength(0) - 1 ? " " : string.Empty);
 				}
+				gridStr += string.Format("{0}", y < this.m_Grid.GetLength(1) - 1 ? "," : string.Empty);
 			}
+			gridStr += "\n";
 		}
 		this.m_CellPrefab.gameObject.SetActive(false);
+		Debug.Log (gridStr);
 	}
 
-	public virtual void GenerateDinosaurus() {
-		var randomIndex = UnityEngine.Random.Range(0, this.m_DinosaurusPrefabs.Length);
-		var dinosaurus = Instantiate(this.m_DinosaurusPrefabs[randomIndex]);
+	public virtual void GenerateDinosaur() {
+		var dinosaurus = Instantiate(this.m_DinosaurusPrefabs[DINOSAURUS_INDEX]);
 		dinosaurus.transform.SetParent(this.m_DinosaurusRoot);
 		dinosaurus.transform.localPosition = Vector3.zero;
 	}
